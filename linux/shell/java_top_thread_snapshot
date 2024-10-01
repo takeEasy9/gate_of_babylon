@@ -1,0 +1,43 @@
+#!/bin/bash
+# 脚本名称：java_top_thread_snapshot
+# 用途：查看指定Java进程中CPU使用率最高的线程快照信息
+
+# 检查参数个数
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <main-class-name>"
+    exit 1
+fi
+
+# 获取输入的主类名
+MAIN_CLASS="$1"
+
+# Step 1: 使用 jps -l 命令结合输入的主类名获得 java 进程id
+PID=$(jps -l | grep "$MAIN_CLASS" | grep -v grep | awk '{print $1}')
+
+# 检查是否找到进程ID
+if [ -z "$PID" ]; then
+    echo "Error: No Java process found with main class '$MAIN_CLASS'."
+    exit 2
+fi
+echo "Found Java process with PID: $PID"
+
+# Step 2: 获取线程cpu使用率最高的线程id
+TOP_THREAD_ID=$(top -Hp "$PID" | grep -v "top -Hp" | head -n 1 | awk '{print $1}')
+
+# 检查是否找到线程ID
+if [ -z "$TOP_THREAD_ID" ]; then
+    echo "Error: No threads found for process with PID '$PID'."
+    exit 3
+fi
+echo "Top CPU usage thread ID: $TOP_THREAD_ID"
+
+# Step 3: 使用 printf "0x%x" pid，将线程id转换为16进制
+THREAD_ID_HEX=$(printf "0x%x" "$TOP_THREAD_ID")
+
+# Step 4: jstack java 进程id | grep 16进制线程id -A 10
+echo "Thread dump for thread ID $THREAD_ID_HEX:"
+jstack "$PID" | grep "$THREAD_ID_HEX" -A 10
+
+exit 0
+
+    
