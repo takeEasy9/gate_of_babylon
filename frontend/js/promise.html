@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>手写Promise</title>
+    <link rel="stylesheet" type="text/css" href="" />
+  </head>
+  <style type="text/css"></style>
+  <body>
+    <h1 style="display: flex; justify-content: center; align-items: center">
+      手写Promise, Promise 规范:
+      <a href="https://promisesaplus.com.cn/">Promises/A+</a>
+    </h1>
+    <main>
+      <ul>
+        <li>
+          <p>
+            Promise 三种状态：pending, fulfilled, rejected,
+            可由pending转移为fulfilled/rejected, fulfilled/rejected为最终状态,
+            不可以转移成其他状态。
+          </p>
+        </li>
+        <li>
+          <p>
+            Promise then方法：then 方法必须返回一个 promise 对象。
+            接受两个可选参数onFulfilled 和 onRejected, 如果
+            onFulfilled/onRejected 不是函数, 其必须被忽略。onFulfilled 和
+            onRejected回调是异步的。
+          </p>
+        </li>
+      </ul>
+    </main>
+  </body>
+  <script src="" type="text/javascript" charset="UTF-8">
+    const PENDING = "pending";
+    const FULFILLED = "fulfilled";
+    const REJECTED = "rejected";
+    // 考虑queueMicrotask兼容性问题
+    function runMicroTask(fn) {
+      if (typeof queueMicrotask === "function") {
+        queueMicrotask(fn);
+      } else if (
+        typeof process === "object" &&
+        typeof process.nextTick === "function"
+      ) {
+        process.nextTick(fn);
+      } else if (typeof MutationObserver === "function") {
+        const text = document.createTextNode("");
+        const observer = new MutationObserver(fn);
+        observer.observe(text, { characterData: true });
+        text.data = "1";
+      } else {
+        setTimeout(fn);
+      }
+    }
+    function isPromiseLike(obj) {
+      return typeof obj?.then === "function";
+    }
+    class MyPromise {
+      #state = PENDING;
+      #value;
+      #callbacks;
+      constructor(executor) {
+        this.#callbacks = [];
+        const resolve = (value) => {
+          this.#setState(FULFILLED, value);
+        };
+        const reject = (reason) => {
+          this.#setState(REJECTED, reason);
+        };
+        try {
+          executor(resolve, reject);
+        } catch (e) {
+          reject(e);
+        }
+      }
+
+      #setState(state, value) {
+        if (this.#state !== PENDING) return;
+        this.#state = state;
+        this.#value = value;
+      }
+
+      #runTask() {
+        // 微任务异步执行onFulfilled/onRejected
+        runMicroTask(() => {
+          if (this.#state !== PENDING) {
+            this.#callbacks.forEach((fn) => fn());
+            this.#callbacks = [];
+          }
+        });
+      }
+
+      then(onFulfilled, onRejected) {
+        const promise = new MyPromise((resolve, reject) => {
+          this.#callbacks.push(() => {
+            try {
+              const cb = this.#state === FULFILLED ? onFulfilled : onRejected;
+              const res =
+                typeof cb === "function" ? cb(this.#value) : this.#value;
+              // 防止 promise 和 res 指向同一对象造成死循环
+              if (promise === res) {
+                reject(new TypeError("Chaining cycle detected for promise"));
+              } else if (isPromiseLike(res)) {
+                res.then(onFulfilled, onRejected);
+              } else {
+                resolve(res);
+              }
+            } catch (error) {
+              reject(error);
+            }
+          });
+          this.#runTask();
+        });
+      }
+    }
+  </script>
+</html>
