@@ -7,33 +7,26 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
     />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>手写Promise</title>
+    <title>Promise 相关面试题</title>
     <link rel="stylesheet" type="text/css" href="" />
   </head>
   <style type="text/css"></style>
   <body>
-    <h1 style="display: flex; justify-content: center; align-items: center">
+    <h1 Promise 相关面试题></h1>
+    <main>
+      <p>1 手写Promise</p>
       手写Promise, Promise 规范:
       <a href="https://promisesaplus.com.cn/">Promises/A+</a>
-    </h1>
-    <main>
-      <ul>
-        <li>
-          <p>
-            Promise 三种状态：pending, fulfilled, rejected,
-            可由pending转移为fulfilled/rejected, fulfilled/rejected为最终状态,
-            不可以转移成其他状态。
-          </p>
-        </li>
-        <li>
-          <p>
-            Promise then方法：then 方法必须返回一个 promise 对象。
-            接受两个可选参数onFulfilled 和 onRejected, 如果
-            onFulfilled/onRejected 不是函数, 其必须被忽略。onFulfilled 和
-            onRejected回调是异步的。
-          </p>
-        </li>
-      </ul>
+      <p>
+        Promise 三种状态：pending, fulfilled, rejected,
+        可由pending转移为fulfilled/rejected, fulfilled/rejected为最终状态,
+        不可以转移成其他状态。
+      </p>
+      <p>
+        Promise then方法：then 方法必须返回一个 promise 对象。
+        接受两个可选参数onFulfilled 和 onRejected, 如果 onFulfilled/onRejected
+        不是函数, 其必须被忽略。onFulfilled 和 onRejected回调是异步的。
+      </p>
     </main>
   </body>
   <script src="" type="text/javascript" charset="UTF-8">
@@ -118,6 +111,95 @@
           this.#runTask();
         });
       }
+      // Promise.prototype.then(undefined, onRejected) 的一种简写形式
+      catch(onRejected) {
+        return this.then(null, onRejected);
+      }
+
+      // finally() 方法类似于调用 then(onFinally, onFinally)。然而，有几个不同之处：
+      // 创建内联函数时，你可以只将其传入一次，而不是强制声明两次或为其创建变量
+      // onFinally 回调函数不接收任何参数。这种情况恰好适用于你不关心拒绝原因或兑现值的情况，因此无需提供它。
+      // finally() 调用通常是透明的，不会更改原始 promise 的状态
+      finally(onFinally) {
+        return this.then(
+          (res) => {
+            onFinally();
+            return res;
+          },
+          (err) => {
+            onFinally();
+            throw err;
+          }
+        );
+      }
+
+      static resolve(value) {
+        return isPromiseLike(value)
+          ? value
+          : MyPromise((resolve) => resolve(value));
+      }
+      static reject(reason) {
+        return new MyPromise((_, reject) => reject(reason));
+      }
+      static all(promises) {
+        return new MyPromise((resolve, reject) => {
+          const res = [];
+          let count = 0;
+          promises.forEach((promise, index) => {
+            MyPromise.resolve(promise).then(
+              (value) => {
+                res[index] = value;
+                if (++count === promises.length) {
+                  resolve(res);
+                }
+              },
+              (reason) => {
+                reject(reason);
+              }
+            );
+          });
+        });
+      }
     }
+
+    // Promise 链式调用顺序笔试题1 https://www.bilibili.com/video/BV1Mz4y1T7KZ/?spm_id_from=333.1007.top_right_bar_window_history.content.click&vd_source=a44de6033b8c062af031b64fe746f310
+    const promise = new Promise((resolve, reject) => {
+      console.log(1);
+      resolve();
+      console.log(2);
+    });
+    promise.then(() => {
+      console.log(3);
+    });
+    console.log(4);
+    // 笔试题1输出 1 2 4 3
+
+    // Promise 链式调用顺序笔试题2
+    const promise2 = new Promise((resolve, reject) => {
+      console.log(1);
+      setTimeout(() => {
+        console.log(2);
+        resolve();
+        console.log(3);
+      });
+    });
+    promise2.then(() => {
+      console.log(4);
+    });
+    console.log(5);
+    // 笔试题2输出 1 5 2 3 4
+
+    setTimeout(() => {
+      console.log(1);
+    });
+    const promise3 = new Promise((resolve, reject) => {
+      console.log(2);
+      resolve();
+    });
+    promise3.then(() => {
+      console.log(3);
+    });
+    console.log(4);
+    // 笔试题3输出 2 4 3 1
   </script>
 </html>

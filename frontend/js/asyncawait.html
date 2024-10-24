@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="" />
+  </head>
+  <style type="text/css"></style>
+  <body></body>
+  <script src="" type="text/javascript" charset="UTF-8">
+    // 参照React函数编程，消除异步传染性
+    async function getUser() {
+      return await fetch("/api/user").then((res) => res.json());
+    }
+
+    async function m1() {
+      return await getUser();
+    }
+
+    async function m2() {
+      return await m1();
+    }
+
+    async function m3() {
+      return await m2();
+    }
+
+    async function main() {
+      const user = await m3();
+      console.log(user);
+    }
+
+    // 函数式编程下， throw promise 重新运行之前的函数
+    function run(fn) {
+      const cache = [];
+      let i = 0;
+      const _orginalFetch = window.fetch;
+      Window.fetch = (...args) => {
+        if (cache[i]) {
+          if (cache[i].status === "fulfilled") {
+            return cache[i].data;
+          } else if (cache[i].status === "rejected") {
+            throw cache[i].err;
+          }
+        }
+        const result = {
+          status: "pending",
+          data: null,
+          err: null,
+        };
+        cache[i++] = result;
+        const promise = _orginalFetch(...args)
+          .then((res) => res.json())
+          .then(
+            (data) => {
+              result.status = "fulfilled";
+              result.data = data;
+            },
+            (err) => {
+              result.status = "rejected";
+              result.err = err;
+            }
+          );
+        throw promise;
+      };
+      try {
+        fn();
+      } catch (err) {
+        if (typeof err?.then === "function") {
+          const reRun = () => {
+            i = 0;
+            fn();
+          };
+          err.then(reRun, reRun);
+        }
+      }
+    }
+  </script>
+</html>
