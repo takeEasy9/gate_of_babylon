@@ -36,18 +36,22 @@
     // 考虑queueMicrotask兼容性问题
     function runMicroTask(fn) {
       if (typeof queueMicrotask === "function") {
+        // 浏览器环境
         queueMicrotask(fn);
       } else if (
         typeof process === "object" &&
         typeof process.nextTick === "function"
       ) {
+        // node 环境
         process.nextTick(fn);
       } else if (typeof MutationObserver === "function") {
+        // 浏览器环境
         const text = document.createTextNode("");
         const observer = new MutationObserver(fn);
         observer.observe(text, { characterData: true });
         text.data = "1";
       } else {
+        // node版本或浏览器版本过低, 上述方法都不支持
         setTimeout(fn);
       }
     }
@@ -57,9 +61,8 @@
     class MyPromise {
       #state = PENDING;
       #value;
-      #callbacks;
+      #callbacks = [];
       constructor(executor) {
-        this.#callbacks = [];
         const resolve = (value) => {
           this.#setState(FULFILLED, value);
         };
@@ -67,6 +70,7 @@
           this.#setState(REJECTED, reason);
         };
         try {
+          // promise构造函数传递的函数executor式同步执行的
           executor(resolve, reject);
         } catch (e) {
           reject(e);

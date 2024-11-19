@@ -74,6 +74,7 @@
         if (typeof err?.then === "function") {
           const reRun = () => {
             i = 0;
+            window.fetch = _orginalFetch;
             fn();
           };
           err.then(reRun, reRun);

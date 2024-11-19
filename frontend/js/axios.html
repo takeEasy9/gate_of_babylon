@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <script src="" type="text/javascript" charset="UTF-8">
+    // axios 面时题1: 取消请求
+    let absortConttroller = null;
+    function request() {
+      absortConttroller && absortConttroller.abort();
+
+      absortConttroller = new AbortController();
+      try {
+        // 发送请求
+        axios
+          .get("http://localhost:3000/api", {
+            // 关联abortController
+            signal: absortConttroller.signal,
+          })
+          .then((res) => {
+            console.log(res);
+          });
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  </script>
+  <body></body>
+</html>
