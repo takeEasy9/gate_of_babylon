@@ -1,6 +1,6 @@
 面试复盘：
 
-2024-11-28 合合信息
+**2024-11-28 合合信息**
 
 1.Mybatis 怎么预防SQL注入？
 
@@ -29,4 +29,26 @@
 select for update: 写锁
 
 lock in share mode：读锁
+
+**2024-12-3 蚂蚁面试**
+
+1.hashMap 在再散列时如何保证查询性能？(参考concurrentHashMap的做法)
+
+2.ThreadLoacal 原理，ThreadLoacal 变量存在哪个位置(线程栈、还是堆上)，ThreadLoacal 可能会存在哪些问题？
+
+3.redis缓存穿透怎么解决？
+
+4.Mysql 索引设计，失效场景，慢SQL如何排查，通过索引查询到数据的整个过程？
+
+5.接口限流常见解决方案？
+
+6.消息中间件如何解决消息丢失问题？
+
+7.Completfuture每个200毫秒定时执行
+
+8.项目亮点，项目中的哪些设计你认为做的比较好？
+
+
+
+
 
