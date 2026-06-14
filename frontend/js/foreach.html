@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>foreach</title>
+  </head>
+  <script type="text/javascript">
+    const numbersOne = [1, 2, 3];
+    // forEach 中添加元素, 影响循环次数吗？
+    numbersOne.forEach((number, index) => {
+      console.log(number);
+      numbersOne.push(number + 3);
+    });
+    console.log("numbersOne的最终结果", numbersOne);
+    // forEach 中删除元素, 影响循环次数吗？
+    const numbersTwo = [1, 2, 3];
+    numbersTwo.forEach((number, index) => {
+      console.log(number);
+      numbersTwo.pop();
+    });
+    console.log("numbersTwo的最终结果", numbersTwo);
+
+    Array.prototype.ForEach = function (callbackfn, thisArg) {
+      if (this === null || this === undefined) {
+        throw new TypeError("this 不能是 null 或者 undefined");
+      }
+      let O = this;
+      let len = O.length;
+      if (typeof callbackfn !== "function") {
+        throw new TypeError("callback 不是函数");
+      }
+      for (let k = 0; k < len; k++) {
+        if (k in O) {
+          let kValue = O[k];
+          callbackfn.call(thisArg, kValue, k, O);
+        }
+      }
+    };
+  </script>
+</html>
